@@ -1,27 +1,34 @@
 #!/bin/bash
 ### BEGIN INIT INFO
-# Provides:             init script for Cassandra.
+# Provides:             Suse Init script for Cassandra.
 # Required-Start:
 # Required-Stop:
 # Default-Start:        3 5
 # Default-Stop:         0 1 2 6
-# Short-Description:    Cassandra-Init
-# Description:          Cassandra-Init
+# Short-Description:    Cassandra-Init-Suse
+# Description:          Cassandra-Init-Suse
 # script slightly modified from Patrick Monte (patrick.monte@mv.com.br)
 # http://blog.milford.io/2010/06/installing-apache-cassandra-on-centos/
 ### END INIT INFO
 
 # . /etc/rc.d/init.d/functions
+. /etc/rc.status
 
-###  Criar pasta mkdir /MV/apm/apache-cassandra-2.1.17/log
-
-CASS_HOME=/MV/apm/apache-cassandra-2.1.17
+## Cassandra Folder Install
+CASS_HOME=/opt/apm/apache-cassandra-2.1.17
 CASS_BIN=$CASS_HOME/bin/cassandra
-CASS_LOG=$CASS_HOME/log/system.log
-CASS_USER="mv"
-CASS_PID=/var/run/cassandra.pid
+CASS_LOG=$CASS_HOME/logs/cassandra.log
+CASS_USER="cassandra"
+
+# PID Check
+cass_pid() {
+    echo `ps aux | grep $CASS_HOME | grep -v grep | awk '{ print $2 }'`
+}
+PID=$(cass_pid)
+
  
-if [ ! -f $CASS_BIN ]; then
+if [ ! -f $CASS_BIN ]; 
+then
   echo "File not found: $CASS_BIN"
   exit 1
 fi
@@ -29,18 +36,20 @@ fi
 RETVAL=0
  
 start() {
-  if [ -f $CASS_PID ] && checkpid `cat $CASS_PID`; then
-    echo "Cassandra is already running."
+  if [ -n "$PID" ]; 
+  then
+    echo "Cassandra is already running (pid: $PID)."
     exit 0
   fi
   echo -n $"Starting $prog: "
-  daemon --user $CASS_USER $CASS_BIN -p $CASS_PID >> $CASS_LOG 2>&1
+  startproc -v -u $CASS_USER -l $CASS_LOG -w $CASS_BIN
   usleep 500000
   RETVAL=$?
-  if [ "$RETVAL" = "0" ]; then
-    echo_success
+  if [ "$RETVAL" = "0" ]; 
+  then
+    rc_status -v
   else
-    echo_failure
+    rc_failed
   fi
   echo
   return $RETVAL
@@ -48,25 +57,28 @@ start() {
  
 stop() {
   # check if the process is already stopped by seeing if the pid file exists.
-  if [ ! -f $CASS_PID ]; then
+  if [ ! -n "$PID" ]; 
+  then
     echo "Cassandra is already stopped."
     exit 0
   fi
   echo -n $"Stopping $prog: "
-  if kill `cat $CASS_PID`; then
+  if kill $PID; then
     RETVAL=0
-    echo_success
+    rc_status -v
   else
     RETVAL=1
-    echo_failure
+    rc_failed
   fi
   echo
   [ $RETVAL = 0 ]
 }
  
 status_fn() {
-  if [ -f $CASS_PID ] && checkpid `cat $CASS_PID`; then
-    echo "Cassandra is running."
+  if [ -n "$PID" ]; 
+  then
+#  if checkproc $CASS_BIN; then
+    echo "Cassandra is running with pid: $PID "
     exit 0
   else
     echo "Cassandra is stopped."
@@ -86,7 +98,6 @@ case "$1" in
     ;;
   restart)
     stop
-  usleep 500000
     start
     ;;
   *)
