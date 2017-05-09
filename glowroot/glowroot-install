@@ -1,0 +1,37 @@
+Instalação Glowroot 
+
+-Arquivos necessarios:
+  glowroot-dist.zip
+  glowroot-central.war
+
+-Adicionar em cada tomcat/aplicação no JVM_OPS
+
+CATALINA_OPTS="$CATALINA_OPTS -Dglowroot.agent.id=ssesa00033_tomcat-8080"
+CATALINA_OPTS="$CATALINA_OPTS -Dglowroot.agent.rollup.id=sysreport"
+CATALINA_OPTS="$CATALINA_OPTS -javaagent:/MV/apm/glowroot/glowroot.jar"
+
+
+-Ajustar o arquivo /MV/apm/glowroot/glowroot.properties
+
+# Endereço do coletor central
+collector.host=200.189.124.244
+collector.port=8181
+
+
+-Deploy glowroot-central.war no tomcat que será o coletor.
+
+-Adicionar tomcat do glowroot-central
+CATALINA_OPTS="$CATALINA_OPTS-Dglowroot.central.dir=/MV/glowroot-central"
+
+- Ajustar o arquivo /MV/apm/glowroot/glowroot.properties
+
+# default is cassandra.contactPoints=127.0.0.1
+cassandra.contactPoints=jira.mvfor.local
+# default is cassandra.keyspace=glowroot
+cassandra.keyspace=glowroot
+# default is grpc.bindAddress=0.0.0.0
+grpc.bindAddress=0.0.0.0
+# default is grpc.port=8181
+grpc.port=8181
+
+
